@@ -60,7 +60,10 @@ Var OpenmrsWar
 Var Dialog
 Var Label
 Var Password
-Var Choice
+Var LaunchChoice
+
+Var ReadmeChoice
+Var ReadmePath
 
 Var EnableOpenmrsOption
 
@@ -76,22 +79,38 @@ Function MysqlDetailsPage
 FunctionEnd
 
 Function FinishPage
-	${If} $TomcatExists == false
-		MessageBox MB_OK "Installation successfull !! The default Tomcat username is 'root' and password is 'openmrs' ."
-	${EndIf}
 	nsDialogs::Create 1018
 	Pop $Dialog
-	${NSD_CreateCheckBox} 0 0 100% 12u "Launch openmrs website."
-	Pop $Choice
-	${NSD_Check} $Choice
+
+	${NSD_CreateCheckBox} 0 0 100% 12u "Launch OpenMRS Application."
+	Pop $LaunchChoice
+	${NSD_Check} $LaunchChoice
+
+	${NSD_CreateCheckBox} 0 26u 100% 12u "View README"
+	Pop $ReadmeChoice
+	${NSD_Check} $ReadmeChoice
+
 	nsDialogs::Show
 FunctionEnd
 
 Function FinishPageLeave
-	${NSD_GetState} $Choice $Choice
-	${If} $Choice == 1
-	ExecShell "open" "http://localhost:8080/openmrs"
+	${NSD_GetState} $LaunchChoice $LaunchChoice
+	${If} $LaunchChoice == 1
+	    ExecShell "open" "http://localhost:8080/openmrs"
 	${EndIf}
+
+	${NSD_GetState} $ReadmeChoice $ReadmeChoice
+	${If} $ReadmeChoice == 1
+	    ExecShell "open" "$ReadmePath/OpenMRS-README.txt"
+	${EndIf}
+		
+FunctionEnd
+
+Function ConfigureREADME
+	ReadRegStr $TomcatInstallPath HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "InstallPath"
+	StrCpy $ReadmePath "$TomcatInstallPath\webapps"
+	SetOutPath "$ReadmePath"      ; Set output path to the installation directory
+	File "OpenMRS-README.txt"  ; Put file there
 FunctionEnd
 
 Function CreateMysqlLabels
@@ -140,6 +159,7 @@ Section "OpenMRS War (Required)" openmrs_war_required
 	Call DeployOpenmrsWar
 	Call WriteRegistryKeys
 	Call CreateUninstaller
+	Call ConfigureREADME
 SectionEnd
 
 Function CreateUninstaller

@@ -65,7 +65,7 @@ Function ConfigureTomcat
 	SetOutPath "$TomcatInstallPath\conf"      ; Set output path to the installation directory
 	File "tomcat-users.xml"  ; Put file there
 FunctionEnd
-  
+
 ;Downloads and installs Mysql 5.1
 Function InstallMySql
 	${If} $MysqlExists == false
