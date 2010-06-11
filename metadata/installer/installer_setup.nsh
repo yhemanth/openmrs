@@ -7,7 +7,6 @@
 !define MUI_UNICON "openmrs.ico"
 !define CRC
 
-
 !define MUI_COMPONENTSPAGE_SMALLDESC 
 !define MUI_COMPONENTSPAGE_TEXT_DESCRIPTION_TITLE ""
 !define MUI_COMPONENTSPAGE_TEXT_DESCRIPTION_INFO "MySQL is not required if you choose to use another database."

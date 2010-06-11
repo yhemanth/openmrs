@@ -9,12 +9,6 @@
 !define PRODUCT_NAME "OpenMRS"
 !define JAVA_VERSION
 
-!define TOMCAT_DOWNLOAD_URL "http://www.fightrice.com/mirrors/apache/tomcat/tomcat-6/v6.0.26/bin/apache-tomcat-6.0.26.exe"
-!define MYSQL_DOWNLOAD_URL "http://dev.mysql.com/get/Downloads/MySQL-5.1/mysql-essential-5.1.46-win32.msi/from/http://mirrors.dedipower.com/www.mysql.com/"
-!define OPENMRS_WAR_DOWNLOAD_URL "http://resources.openmrs.org/builds/releases/OpenMRS_1.6.1/openmrs.war"
-!define JAVA_6_DOWNLOAD_URL "http://download.java.net/jdk6/6u21/promoted/b02/binaries/jdk-6u20-ea-bin-b02-windows-i586-01_apr_2010.exe"
-
-
 ;Parameters used by the downloading window and progress bar. 
 LangString DESC_REMAINING ${LANG_ENGLISH} " (%d %s%s remaining)"
 LangString DESC_PROGRESS ${LANG_ENGLISH} "%d.%01dkB" ;"%dkB (%d%%) of %dkB @ %d.%01dkB"

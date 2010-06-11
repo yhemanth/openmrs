@@ -624,9 +624,12 @@
         <if>
             <equals arg1="${installer.mode}" arg2="online"/>
             <then>
+                <property name="installer.args"
+                          value="-DTOMCAT_DOWNLOAD_URL=${tomcat.download.url} -DMYSQL_DOWNLOAD_URL=${mysql.download.url} -DJAVA_6_DOWNLOAD_URL=${jdk.download.url} -DOPENMRS_WAR_DOWNLOAD_URL=${openmrs.download.url}"/>
                 <echo message="Creating online installer."/>
             </then>
             <else>
+                <property name="installer.args" value=""/>
                 <antcall target="package-web"/>
                 <mkdir dir="${installer-dependencies.dir}"/>
 
@@ -682,6 +685,7 @@
             </else>
         </if>
 
+
         <property name="nsis.script" value="${dist.installer.dir}/openmrs_${installer.mode}.nsi"/>
 
         <mkdir dir="${dist.installer.dir}"/>
@@ -699,7 +703,7 @@
             <arg line="${nsis.script}"/>
         </exec>
         <exec executable="makensis" os="Linux" logError="true" failonerror="true">
-            <arg line="${nsis.script}"/>
+            <arg line="${installer.args} ${nsis.script}"/>
         </exec>
         <exec executable="C:\Program Files\NSIS\makensis" os="Windows" logError="true" failonerror="true">
             <arg line="${nsis.script}"/>
