@@ -293,13 +293,6 @@ Function DeployOpenmrsWar
     !endif
 FunctionEnd
 
-Function DownloadOpenmrsWar
-	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_OPENMRS_WAR)" "$(DESC_CONNECTING)" \
-       "$(DESC_SECOND)" "$(DESC_MINUTE)" "$(DESC_HOUR)" "$(DESC_PLURAL)" \
-       "$(DESC_PROGRESS)" "$(DESC_REMAINING)" \
-	   /TIMEOUT=30000 ${OPENMRS_WAR_DOWNLOAD_URL} $OpenmrsWar
-FunctionEnd
-
 Function ConfigureTomcat
 	ReadRegStr $TomcatInstallPath HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "InstallPath"
 	SetOutPath "$TomcatInstallPath\conf"      ; Set output path to the installation directory
@@ -307,49 +300,11 @@ Function ConfigureTomcat
 FunctionEnd
 
 Function ExecuteTomcatSetup
-	!ifdef TOMCAT_DOWNLOAD_URL
-        Call TomcatDownloadStatus
-	!else
-	    StrCpy $TomcatDownload true
-	!endif
-	
 	${If} $TomcatDownload == true
 		ExecWait '"$TomcatSetup" /S ++Startup=manual'
 		ExecWait 'net start "Apache Tomcat 6"'
 		Delete $TomcatSetup
 	${EndIf}
-FunctionEnd
-
-Function TomcatDownloadStatus
-	Pop $R0 ;Get the return value
-	StrCmp $R0 "success" +4
-		StrCpy $TomcatDownload false
-		MessageBox MB_OK "Download failed: $R0"
-		Quit
-	StrCpy $TomcatDownload true
-FunctionEnd
-
-Function ExecuteJavaSetup
-	!ifdef JAVA_6_DOWNLOAD_URL
-        Call JavaDownloadStatus
-	!else
-	    StrCpy $JavaDownload true
-	!endif
-
-	Call JavaDownloadStatus
-	${If} $JavaDownload == true
-		ExecWait '"$JavaSetup" /s'
-		Delete $JavaSetup
-	${EndIf}
-FunctionEnd
-
-Function JavaDownloadStatus
-	Pop $R0 ;Get the return value
-	StrCmp $R0 "success" +4
-		StrCpy $JavaDownload false
-		MessageBox MB_OK "Download failed: $R0"
-		Quit
-	StrCpy $JavaDownload true
 FunctionEnd
 
 ;Checks if Java with version 6 or more is installed, if not calls InstallJava.
@@ -376,17 +331,56 @@ Function DetectTomcat
 	${EndIf}
 FunctionEnd
 
+;Downloads and installs Java 6
+Function InstallJava
+	${If} $JavaExists == false
+        StrCpy $JavaSetup "$TEMP\jdk-6u20-windows-i586.exe"
+        !ifdef JAVA_6_DOWNLOAD_URL
+            Call DownloadJava
+            Call VerifyJavaDownloadStatus
+        !else
+            Call ExtractJavaSetupToTemp
+            StrCpy $JavaDownload true
+        !endif
+		Call ExecuteJavaSetup
+	${EndIf}
+FunctionEnd
+
+Function ExecuteJavaSetup
+	${If} $JavaDownload == true
+		ExecWait '"$JavaSetup" /s'
+		Delete $JavaSetup
+	${EndIf}
+FunctionEnd
+
+;Downloads and installs Tomcat 6.0
+Function InstallTomcat
+	${If} $TomcatExists == false
+        StrCpy $TomcatSetup "$TEMP\apache-tomcat-6.0.26.exe"
+        !ifdef TOMCAT_DOWNLOAD_URL
+    		Call DownloadTomcat
+            Call VerifyTomcatDownloadStatus
+        !else
+    		Call ExtractTomcatSetupToTemp
+            StrCpy $TomcatDownload true
+        !endif
+
+		Call ExecuteTomcatSetup
+		Call ConfigureTomcat
+	${EndIf}
+FunctionEnd
+
 
 ;Downloads and installs Mysql 5.1
 Function InstallMySql
 	${If} $MysqlExists == false
     	StrCpy $MysqlSetup "$TEMP\mysql-essential-5.1.46-win32.msi"
-	    !ifndef MYSQL_DOWNLOAD_URL
-		    Call ExtractMysqlSetupToTemp
-		    StrCpy $MysqlDownload true
-		!else
+	    !ifdef MYSQL_DOWNLOAD_URL
 		    Call DownloadMysql
 		    Call VerifyMysqlDownloadStatus
+		!else
+		    Call ExtractMysqlSetupToTemp
+		    StrCpy $MysqlDownload true
 		!endif
 		Call ExecuteMysqlSetup
 	${EndIf}
@@ -402,11 +396,3 @@ Function ExecuteMysqlSetup
 	${EndIf}
 FunctionEnd
 
-Function VerifyMysqlDownloadStatus
-	Pop $R0 ;Get the return value
-	StrCmp $R0 "success" +4
-		StrCpy $MysqlDownload false
-		MessageBox MB_OK "Download failed: $R0"
-		Quit
-	StrCpy $MysqlDownload true
-FunctionEnd
