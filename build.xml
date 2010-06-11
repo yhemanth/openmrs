@@ -624,8 +624,11 @@
         <if>
             <equals arg1="${installer.mode}" arg2="online"/>
             <then>
+                <condition property="option.separator" value="/D" else="-D">
+                    <os name="Windows"></os>
+                </condition>
                 <property name="installer.args"
-                          value="-DTOMCAT_DOWNLOAD_URL=${tomcat.download.url} -DMYSQL_DOWNLOAD_URL=${mysql.download.url} -DJAVA_6_DOWNLOAD_URL=${jdk.download.url} -DOPENMRS_WAR_DOWNLOAD_URL=${openmrs.download.url}"/>
+                          value="${option.separator}TOMCAT_DOWNLOAD_URL=${tomcat.download.url} ${option.separator}MYSQL_DOWNLOAD_URL=${mysql.download.url} ${option.separator}JAVA_6_DOWNLOAD_URL=${jdk.download.url} ${option.separator}OPENMRS_WAR_DOWNLOAD_URL=${openmrs.download.url}"/>
                 <echo message="Creating online installer."/>
             </then>
             <else>
@@ -700,13 +703,13 @@
         </copy>
 
         <exec executable="makensis" os="Mac OS X" logError="true" failonerror="true">
-            <arg line="${nsis.script}"/>
+            <arg line="${installer.args} ${nsis.script}"/>
         </exec>
         <exec executable="makensis" os="Linux" logError="true" failonerror="true">
             <arg line="${installer.args} ${nsis.script}"/>
         </exec>
         <exec executable="C:\Program Files\NSIS\makensis" os="Windows" logError="true" failonerror="true">
-            <arg line="${nsis.script}"/>
+            <arg line="${installer.args} ${nsis.script}"/>
         </exec>
 
         <delete>
