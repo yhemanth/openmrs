@@ -45,6 +45,7 @@ Var TomcatSetup
 Var Tomcat
 Var TomcatInstallPath
 Var EnableTomcatOption
+Var TomcatDownload
 
 Var MysqlExists
 Var MysqlVersion
@@ -54,6 +55,7 @@ Var MySQL
 Var MysqlPassword
 Var MysqlInstallPath
 Var EnableMysqlOption
+Var MysqlDownload
 
 Var OpenmrsWar
 Var Dialog
@@ -269,3 +271,84 @@ Function GetSectionFlags
 	SectionGetFlags ${mysql} $MysqlSelected
 FunctionEnd
 
+; Write the installation path and uninstall keys into the registry
+Function WriteRegistryKeys
+	WriteRegStr HKLM Software\OpenMRS "InstallPath" $OpenmrsWar
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenMRS" \
+			"DisplayName" "OpenMRS (remove only)"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenMRS" \
+			"UninstallString" '"$OpenmrsWar\OpenMRS_uninstall.exe"'
+FunctionEnd
+
+Function DeployOpenmrsWar
+	ReadRegStr $OpenmrsWar HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "InstallPath"
+	StrCpy $OpenmrsWar "$OpenmrsWar\webapps" ; Point installation to the webapps subdirectory
+
+    !ifndef OPENMRS_WAR_DOWNLOAD_URL
+        SetOutPath "$OpenmrsWar"      ; Set output path to the installation directory
+	    File "openmrs.war"  ; Put file there
+    !else
+	    Call DownloadOpenmrsWar
+    !endif
+FunctionEnd
+
+Function DownloadOpenmrsWar
+	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_OPENMRS_WAR)" "$(DESC_CONNECTING)" \
+       "$(DESC_SECOND)" "$(DESC_MINUTE)" "$(DESC_HOUR)" "$(DESC_PLURAL)" \
+       "$(DESC_PROGRESS)" "$(DESC_REMAINING)" \
+	   /TIMEOUT=30000 ${OPENMRS_WAR_DOWNLOAD_URL} $OpenmrsWar
+FunctionEnd
+
+Function ExecuteMysqlSetup
+	!ifdef MYSQL_DOWNLOAD_URL
+	    Call MysqlDownloadStatus
+	!else
+	    StrCpy $MysqlDownload true
+	!endif
+	
+	${If} $MysqlDownload == true
+		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
+		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
+		ExecWait "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MysqlPassword');"
+		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q AddBinToPath=yes'
+		Delete $MysqlSetup
+	${EndIf}
+FunctionEnd
+
+Function MysqlDownloadStatus
+	Pop $R0 ;Get the return value
+	StrCmp $R0 "success" +4
+		StrCpy $MysqlDownload false
+		MessageBox MB_OK "Download failed: $R0"
+		Quit
+	StrCpy $MysqlDownload true
+FunctionEnd
+
+Function ConfigureTomcat
+	ReadRegStr $TomcatInstallPath HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "InstallPath"
+	SetOutPath "$TomcatInstallPath\conf"      ; Set output path to the installation directory
+	File "tomcat-users.xml"  ; Put file there
+FunctionEnd
+
+Function ExecuteTomcatSetup
+	!ifdef TOMCAT_DOWNLOAD_URL
+        Call TomcatDownloadStatus
+	!else
+	    StrCpy $TomcatDownload true
+	!endif
+	
+	${If} $TomcatDownload == true
+		ExecWait '"$TomcatSetup" /S ++Startup=manual'
+		ExecWait 'net start "Apache Tomcat 6"'
+		Delete $TomcatSetup
+	${EndIf}
+FunctionEnd
+
+Function TomcatDownloadStatus
+	Pop $R0 ;Get the return value
+	StrCmp $R0 "success" +4
+		StrCpy $TomcatDownload false
+		MessageBox MB_OK "Download failed: $R0"
+		Quit
+	StrCpy $TomcatDownload true
+FunctionEnd

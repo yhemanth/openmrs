@@ -22,8 +22,7 @@ LangString DESC_DOWNLOADING_MYSQL ${LANG_ENGLISH} "Downloading MYSQL"
 LangString DESC_DOWNLOADING_OPENMRS_WAR ${LANG_ENGLISH} "Downloading Openmrs.war"
 
 Var JavaDownload
-Var TomcatDownload
-Var MysqlDownload
+
 
 ;Downloads and installs Java 6
 Function InstallJava
@@ -104,30 +103,7 @@ Function DownloadTomcat
 	   /TIMEOUT=30000 ${TOMCAT_DOWNLOAD_URL} $TomcatSetup
 FunctionEnd
 
-Function ExecuteTomcatSetup
-	Call TomcatDownloadStatus
-	${If} $TomcatDownload == true
-		ExecWait '"$TomcatSetup" /S ++Startup=manual'
-		ExecWait 'net start "Apache Tomcat 6"'
-		Delete $TomcatSetup
-	${EndIf}
-FunctionEnd
-
-Function TomcatDownloadStatus
-	Pop $R0 ;Get the return value
-	StrCmp $R0 "success" +4
-		StrCpy $TomcatDownload false
-		MessageBox MB_OK "Download failed: $R0"
-		Quit
-	StrCpy $TomcatDownload true
-FunctionEnd
 	
-Function ConfigureTomcat
-	ReadRegStr $TomcatInstallPath HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "InstallPath"
-	SetOutPath "$TomcatInstallPath\conf"      ; Set output path to the installation directory
-	File "tomcat-users.xml"  ; Put file there
-FunctionEnd
-  
 ;Downloads and installs Mysql 5.1
 Function InstallMySql
 	${If} $MysqlExists == false
@@ -158,47 +134,5 @@ Function DownloadMysql
        "$(DESC_SECOND)" "$(DESC_MINUTE)" "$(DESC_HOUR)" "$(DESC_PLURAL)" \
        "$(DESC_PROGRESS)" "$(DESC_REMAINING)" \
 	   /TIMEOUT=30000 ${MYSQL_DOWNLOAD_URL} $MysqlSetup
-FunctionEnd
-
-Function ExecuteMysqlSetup
-	Call MysqlDownloadStatus
-	${If} $MysqlDownload == true
-		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
-		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
-		ExecWait "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MysqlPassword');"
-		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q AddBinToPath=yes'
-		Delete $MysqlSetup
-	${EndIf}
-FunctionEnd
-
-Function MysqlDownloadStatus
-	Pop $R0 ;Get the return value
-	StrCmp $R0 "success" +4
-		StrCpy $MysqlDownload false
-		MessageBox MB_OK "Download failed: $R0"
-		Quit
-	StrCpy $MysqlDownload true
-FunctionEnd
- 
-Function DeployOpenmrsWar
-	ReadRegStr $OpenmrsWar HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "InstallPath"
-	StrCpy $OpenmrsWar "$OpenmrsWar\webapps\openmrs.war" ; Point installation to the webapps subdirectory
-	Call DownloadOpenmrsWar
-FunctionEnd
-
-Function DownloadOpenmrsWar
-	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_OPENMRS_WAR)" "$(DESC_CONNECTING)" \
-       "$(DESC_SECOND)" "$(DESC_MINUTE)" "$(DESC_HOUR)" "$(DESC_PLURAL)" \
-       "$(DESC_PROGRESS)" "$(DESC_REMAINING)" \
-	   /TIMEOUT=30000 ${OPENMRS_WAR_DOWNLOAD_URL} $OpenmrsWar
-FunctionEnd
-
-; Write the installation path and uninstall keys into the registry	
-Function WriteRegistryKeys
-	WriteRegStr HKLM Software\OpenMRS "InstallPath" $OpenmrsWar
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenMRS" \
-			"DisplayName" "OpenMRS (remove only)"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\OpenMRS" \
-			"UninstallString" '"$OpenmrsWar\OpenMRS_uninstall.exe"'
 FunctionEnd
 
