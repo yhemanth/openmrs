@@ -38,6 +38,7 @@ Var JavaVersion
 Var JavaSetup
 Var Java
 Var EnableJavaOption
+Var JavaDownload
 
 Var TomcatExists
 Var TomcatVersion
@@ -299,31 +300,6 @@ Function DownloadOpenmrsWar
 	   /TIMEOUT=30000 ${OPENMRS_WAR_DOWNLOAD_URL} $OpenmrsWar
 FunctionEnd
 
-Function ExecuteMysqlSetup
-	!ifdef MYSQL_DOWNLOAD_URL
-	    Call MysqlDownloadStatus
-	!else
-	    StrCpy $MysqlDownload true
-	!endif
-	
-	${If} $MysqlDownload == true
-		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
-		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
-		ExecWait "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MysqlPassword');"
-		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q AddBinToPath=yes'
-		Delete $MysqlSetup
-	${EndIf}
-FunctionEnd
-
-Function MysqlDownloadStatus
-	Pop $R0 ;Get the return value
-	StrCmp $R0 "success" +4
-		StrCpy $MysqlDownload false
-		MessageBox MB_OK "Download failed: $R0"
-		Quit
-	StrCpy $MysqlDownload true
-FunctionEnd
-
 Function ConfigureTomcat
 	ReadRegStr $TomcatInstallPath HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "InstallPath"
 	SetOutPath "$TomcatInstallPath\conf"      ; Set output path to the installation directory
@@ -351,4 +327,86 @@ Function TomcatDownloadStatus
 		MessageBox MB_OK "Download failed: $R0"
 		Quit
 	StrCpy $TomcatDownload true
+FunctionEnd
+
+Function ExecuteJavaSetup
+	!ifdef JAVA_6_DOWNLOAD_URL
+        Call JavaDownloadStatus
+	!else
+	    StrCpy $JavaDownload true
+	!endif
+
+	Call JavaDownloadStatus
+	${If} $JavaDownload == true
+		ExecWait '"$JavaSetup" /s'
+		Delete $JavaSetup
+	${EndIf}
+FunctionEnd
+
+Function JavaDownloadStatus
+	Pop $R0 ;Get the return value
+	StrCmp $R0 "success" +4
+		StrCpy $JavaDownload false
+		MessageBox MB_OK "Download failed: $R0"
+		Quit
+	StrCpy $JavaDownload true
+FunctionEnd
+
+;Checks if Java with version 6 or more is installed, if not calls InstallJava.
+Function DetectJava
+	ReadRegStr $JavaVersion HKLM "SOFTWARE\JavaSoft\Java Development Kit" "CurrentVersion"
+	${If} $JavaVersion >= 1.6
+		StrCpy $JavaExists true
+	${EndIf}
+FunctionEnd
+
+;Checks if Mysql with version 5.1 or more is installed, if not calls InstallMysql.
+Function DetectMysql
+	ReadRegStr $MysqlVersion HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Version"
+	${If} $MysqlVersion >= 5.1
+		StrCpy $MysqlExists true
+	${EndIf}
+FunctionEnd
+
+;Checks if Tomcat with version 6 or more is installed, if not calls InstallTomcat.
+Function DetectTomcat
+	ReadRegStr $TomcatVersion HKLM "SOFTWARE\Apache Software Foundation\Tomcat\6.0" "Version"
+	${If} $TomcatVersion >= 6
+		StrCpy $TomcatExists true
+	${EndIf}
+FunctionEnd
+
+
+;Downloads and installs Mysql 5.1
+Function InstallMySql
+	${If} $MysqlExists == false
+    	StrCpy $MysqlSetup "$TEMP\mysql-essential-5.1.46-win32.msi"
+	    !ifndef MYSQL_DOWNLOAD_URL
+		    Call ExtractMysqlSetupToTemp
+		    StrCpy $MysqlDownload true
+		!else
+		    Call DownloadMysql
+		    Call VerifyMysqlDownloadStatus
+		!endif
+		Call ExecuteMysqlSetup
+	${EndIf}
+FunctionEnd
+
+Function ExecuteMysqlSetup
+	${If} $MysqlDownload == true
+		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
+		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
+		ExecWait "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MysqlPassword');"
+		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q AddBinToPath=yes'
+		Delete $MysqlSetup
+	${EndIf}
+FunctionEnd
+
+Function VerifyMysqlDownloadStatus
+	Pop $R0 ;Get the return value
+	StrCmp $R0 "success" +4
+		StrCpy $MysqlDownload false
+		MessageBox MB_OK "Download failed: $R0"
+		Quit
+	StrCpy $MysqlDownload true
 FunctionEnd
