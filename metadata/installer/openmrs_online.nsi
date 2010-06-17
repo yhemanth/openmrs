@@ -21,11 +21,20 @@ LangString DESC_DOWNLOADING_OPENMRS_WAR ${LANG_ENGLISH} "Downloading Openmrs.war
 
 
 Function DownloadOpenmrsWar
+    StrCpy $OpenmrsWarFile "$OpenmrsWar\openmrs.war"
 	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_OPENMRS_WAR)" "$(DESC_CONNECTING)" \
        "$(DESC_SECOND)" "$(DESC_MINUTE)" "$(DESC_HOUR)" "$(DESC_PLURAL)" \
        "$(DESC_PROGRESS)" "$(DESC_REMAINING)" \
-	   /TIMEOUT=30000 ${OPENMRS_WAR_DOWNLOAD_URL} $OpenmrsWar
+	   /TIMEOUT=30000 ${OPENMRS_WAR_DOWNLOAD_URL} $OpenmrsWarFile
 FunctionEnd
+
+Function VerifyOpenmrsWarStatus
+	Pop $R0 ;Get the return value
+	StrCmp $R0 "success" +4
+		MessageBox MB_OK "Download failed (or) cancelled: $R0"
+		Quit
+FunctionEnd
+
 
 Function DownloadJava
 	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_JAVA)" "$(DESC_CONNECTING)" \

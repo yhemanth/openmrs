@@ -15,6 +15,8 @@
 !define MUI_TEXT_COMPONENTS_TITLE "Select components of OpenMRS to install."
 !define MUI_TEXT_COMPONENTS_SUBTITLE ""
 
+!define MUI_ABORTWARNING
+
 
 Page custom  MysqlDetailsPage  MysqlDetailsPageLeave
 !insertmacro MUI_PAGE_INSTFILES
@@ -59,6 +61,7 @@ Var EnableMysqlOption
 Var MysqlDownload
 
 Var OpenmrsWar
+Var OpenmrsWarFile
 Var Dialog
 Var Label
 Var Password
@@ -290,7 +293,10 @@ Function DeployOpenmrsWar
 	    File "openmrs.war"  ; Put file there
     !else
 	    Call DownloadOpenmrsWar
+	    Call VerifyOpenmrsWarStatus
     !endif
+    DetailPrint "Initializing the application"
+    Sleep 20000
 FunctionEnd
 
 Function ConfigureTomcat

@@ -34,12 +34,6 @@
 	<!-- CheckStyle properties -->
 	<property file="openmrs-checkstyle.properties" />
 
-	<!-- Installer properties -->
-	<property name="dist.installer.dir" value="${dist.dir}/installer" />
-	<property name="java-setup" value="${installer-dependencies.dir}/jdk-6u20-windows-i586.exe" />
-	<property name="mysql-setup" value="${installer-dependencies.dir}/mysql-essential-5.1.46-win32.msi" />
-	<property name="tomcat-setup" value="${installer-dependencies.dir}/apache-tomcat-6.0.26.exe" />
-
 	<!-- Taskdefs -->
 
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -620,65 +614,52 @@
 
 	</target>
 
-    <target name="create-installer" description="Create Openmrs installers">
+    <target name="create-installer" description="Create Openmrs installers" depends="package-web">
+        <!-- Installer properties -->
+        <property name="dist.installer.dir" value="${dist.dir}/installer" />
+        <property name="java-setup" value="${installer-dependencies.dir}/jdk-6u20-windows-i586.exe" />
+        <property name="mysql-setup" value="${installer-dependencies.dir}/mysql-essential-5.1.46-win32.msi" />
+        <property name="tomcat-setup" value="${installer-dependencies.dir}/apache-tomcat-6.0.26.exe" />
+        
+        <condition property="makensis.command" value="C:\Program Files\NSIS\makensis" else="makensis">
+            <os family="windows"></os>
+        </condition>
         <if>
             <equals arg1="${installer.mode}" arg2="online"/>
             <then>
                 <condition property="option.separator" value="/D" else="-D">
-                    <os name="Windows"></os>
+                    <os family="windows"></os>
                 </condition>
                 <property name="installer.args"
                           value="${option.separator}TOMCAT_DOWNLOAD_URL=${tomcat.download.url} ${option.separator}MYSQL_DOWNLOAD_URL=${mysql.download.url} ${option.separator}JAVA_6_DOWNLOAD_URL=${jdk.download.url} ${option.separator}OPENMRS_WAR_DOWNLOAD_URL=${openmrs.download.url}"/>
-                <echo message="Creating online installer."/>
             </then>
             <else>
                 <property name="installer.args" value=""/>
-                <antcall target="package-web"/>
-                <mkdir dir="${installer-dependencies.dir}"/>
+                
+                <macrodef name="download">
+                    <attribute name="file" default="NOT SET"/>
+                    <attribute name="message" default="Downloading.."/>
+                    <attribute name="url" default="Downloading.."/>
+                    <sequential>
+                        <mkdir dir="${installer-dependencies.dir}"/>                        
+                        <available file="@{file}" property="present"/>
+                        <if>
+                            <equals arg1="${present}" arg2="true"/>
+                            <else>
+                                <echo message="@{message}"/>
+                                <get src="@{url}"
+                                     dest="@{file}"/>
+                            </else>
+                        </if>
+                    </sequential>
+                </macrodef>
 
                 <property name="installer.mode" value="offline"/>
 
-                <available file="${java-setup}" property="java.present"/>
-                <if>
-                    <equals arg1="${java.present}" arg2="true"/>
-                    <then>
-                        <echo message="Java setup detected."/>
-                    </then>
-                    <else>
-                        <echo message="Downloading Java..."/>
-                        <get src="${jdk.download.url}"
-                             dest="${java-setup}"/>
-                        <echo message="Download done."/>
-                    </else>
-                </if>
+                <download file="${java-setup}" message="Downloading Java" url="${jdk.download.url}"/>
+                <download file="${mysql-setup}" message="Downloading MySQL" url="${mysql.download.url}"/>
+                <download file="${tomcat-setup}" message="Downloading Tomcat" url="${tomcat.download.url}"/>
 
-                <available file="${mysql-setup}" property="mysql.present"/>
-                <if>
-                    <equals arg1="${mysql.present}" arg2="true"/>
-                    <then>
-                        <echo message="MySQL setup detected."/>
-                    </then>
-                    <else>
-                        <echo message="Downloading Mysql..."/>
-                        <get src="${mysql.download.url}"
-                             dest="${mysql-setup}"/>
-                        <echo message="Download done."/>
-                    </else>
-                </if>
-
-                <available file="${tomcat-setup}" property="tomcat.present"/>
-                <if>
-                    <equals arg1="${tomcat.present}" arg2="true"/>
-                    <then>
-                        <echo message="Tomcat setup detected."/>
-                    </then>
-                    <else>
-                        <echo message="Downloading Tomcat..."/>
-                        <get src="${tomcat.download.url}"
-                             dest="${tomcat-setup}"/>
-                        <echo message="Download done."/>
-                    </else>
-                </if>
                 <copy todir="${dist.installer.dir}" overwrite="true">
                     <fileset dir="${installer-dependencies.dir}">
                         <include name="*"/>
@@ -687,7 +668,6 @@
                 </copy>
             </else>
         </if>
-
 
         <property name="nsis.script" value="${dist.installer.dir}/openmrs_${installer.mode}.nsi"/>
 
@@ -702,20 +682,14 @@
             </fileset>
         </copy>
 
-        <exec executable="makensis" os="Mac OS X" logError="true" failonerror="true">
-            <arg line="${installer.args} ${nsis.script}"/>
-        </exec>
-        <exec executable="makensis" os="Linux" logError="true" failonerror="true">
-            <arg line="${installer.args} ${nsis.script}"/>
-        </exec>
-        <exec executable="C:\Program Files\NSIS\makensis" os="Windows" logError="true" failonerror="true">
+        <exec executable="${makensis.command}" logError="true" failonerror="true">
             <arg line="${installer.args} ${nsis.script}"/>
         </exec>
 
         <delete>
             <fileset dir="${dist.installer.dir}" excludes="openmrs-installer.exe"/>
         </delete>
-        <echo message="${installer.mode} Installer has been generated successfully at ${dist.installer.dir} directory!"/>
+        <echo message="${installer.mode} installer has been generated successfully at ${dist.installer.dir} directory!"/>
     </target>
 
     <target name="create-online-installer">
@@ -724,19 +698,4 @@
 		</antcall>
 	</target>
 
-	<target name="clean-installer">
-		<available file="${dist.installer.dir}" property="installer.present"/>
-		<if>
-			<equals arg1="${installer.present}" arg2="false"/>
-			<then>
-				<echo message="Clean installer complete."/>
-			</then>
-			<else>
-				<delete>
-					<fileset dir="${dist.installer.dir}" includes="*"/>
-					<fileset dir="${installer-dependencies.dir}" includes="*"/>
-				</delete>
-			</else>
-		</if>
-	</target>
 </project>
