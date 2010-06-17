@@ -20,6 +20,8 @@ LangString DESC_DOWNLOADING_MYSQL ${LANG_ENGLISH} "Downloading MYSQL"
 LangString DESC_DOWNLOADING_OPENMRS_WAR ${LANG_ENGLISH} "Downloading Openmrs.war"
 
 
+Var OpenmrsWarFile
+
 Function DownloadOpenmrsWar
     StrCpy $OpenmrsWarFile "$OpenmrsWar\openmrs.war"
 	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_OPENMRS_WAR)" "$(DESC_CONNECTING)" \
@@ -34,7 +36,6 @@ Function VerifyOpenmrsWarStatus
 		MessageBox MB_OK "Download failed (or) cancelled: $R0"
 		Quit
 FunctionEnd
-
 
 Function DownloadJava
 	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_JAVA)" "$(DESC_CONNECTING)" \
@@ -67,7 +68,6 @@ Function VerifyTomcatDownloadStatus
 		Quit
 	StrCpy $TomcatDownload true
 FunctionEnd
-
 
 Function DownloadMysql
 	nsisdl::download /TRANSLATE "$(DESC_DOWNLOADING_MYSQL)" "$(DESC_CONNECTING)" \

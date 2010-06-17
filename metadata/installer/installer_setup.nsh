@@ -61,7 +61,6 @@ Var EnableMysqlOption
 Var MysqlDownload
 
 Var OpenmrsWar
-Var OpenmrsWarFile
 Var Dialog
 Var Label
 Var Password
@@ -394,9 +393,9 @@ FunctionEnd
 
 Function ExecuteMysqlSetup
 	${If} $MysqlDownload == true
-		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
 		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
 		ExecWait "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MysqlPassword');"
+		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
 		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q AddBinToPath=yes'
 		Delete $MysqlSetup
 	${EndIf}
