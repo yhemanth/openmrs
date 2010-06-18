@@ -394,10 +394,8 @@ FunctionEnd
 Function ExecuteMysqlSetup
 	${If} $MysqlDownload == true
 		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
-		ExecWait "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MysqlPassword');"
 		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
-		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q AddBinToPath=yes'
+		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q ServiceName=MySQL RootPassword=$MysqlPassword AddBinToPath=yes'
 		Delete $MysqlSetup
 	${EndIf}
 FunctionEnd
-
