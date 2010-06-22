@@ -94,39 +94,39 @@
 	<!-- *********************************************************** -->
 	<target name="init" description="initialization done before most compile/packaging targets">
 
-		<!--<loadfile srcfile="${openmrs.version.revision.filename}" property="repositoryFileInput" />-->
-		<!--<if>-->
-			<!--<contains string="${repositoryFileInput}" substring="&lt;?xml" casesensitive="false" />-->
-			<!--<then>-->
+		<loadfile srcfile="${openmrs.version.revision.filename}" property="repositoryFileInput" />
+		<if>
+			<contains string="${repositoryFileInput}" substring="&lt;?xml" casesensitive="false" />
+			<then>
 				<!-- SVN pre-1.4 uses XML format -->
-				<!--<propertyregex property="openmrs.version.revision"-->
-					<!--input="${repositoryFileInput}"-->
-					<!--regexp="${openmrs.version.revision.regexp}"-->
-					<!--select="\1"-->
-					<!--defaultValue="? (error with pre-1.4 revision regexp)" />-->
-			<!--</then>-->
-			<!--<else>-->
+				<propertyregex property="openmrs.version.revision"
+					input="${repositoryFileInput}"
+					regexp="${openmrs.version.revision.regexp}"
+					select="\1"
+					defaultValue="? (error with pre-1.4 revision regexp)" />
+			</then>
+			<else>
 				<!-- SVN 1.4+ does not use XML format, just grab 11th line -->
-				<!--<propertyregex property="openmrs.version.revision"-->
-					<!--input="${repositoryFileInput}"-->
-					<!--regexp="^(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n"-->
-					<!--select="\11"-->
-					<!--defaultValue="? (error in post-1.4 revision regexp)" />-->
-			<!--</else>-->
-		<!--</if>-->
-		<!--<property -->
-			<!--name="openmrs.version.long" -->
-			<!--value="${openmrs.version.major}.${openmrs.version.minor}.${openmrs.version.maintenance} ${openmrs.version.suffix} Build ${openmrs.version.revision}"/>-->
-		<!--<property -->
-			<!--name="openmrs.version.short" -->
-			<!--value="${openmrs.version.major}.${openmrs.version.minor}.${openmrs.version.maintenance}.${openmrs.version.revision}-${openmrs.version.suffix}"/>-->
-		<!--<property -->
-			<!--name="openmrs.version.shortnumericonly" -->
-			<!--value="${openmrs.version.major}.${openmrs.version.minor}.${openmrs.version.maintenance}.${openmrs.version.revision}"/>-->
-		<!--<echo message="version: ${openmrs.version.long}"/>-->
+				<propertyregex property="openmrs.version.revision"
+					input="${repositoryFileInput}"
+					regexp="^(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n(.*)\n"
+					select="\11"
+					defaultValue="? (error in post-1.4 revision regexp)" />
+			</else>
+		</if>
+		<property
+			name="openmrs.version.long"
+			value="${openmrs.version.major}.${openmrs.version.minor}.${openmrs.version.maintenance} ${openmrs.version.suffix} Build ${openmrs.version.revision}"/>
+		<property
+			name="openmrs.version.short"
+			value="${openmrs.version.major}.${openmrs.version.minor}.${openmrs.version.maintenance}.${openmrs.version.revision}-${openmrs.version.suffix}"/>
+		<property
+			name="openmrs.version.shortnumericonly"
+			value="${openmrs.version.major}.${openmrs.version.minor}.${openmrs.version.maintenance}.${openmrs.version.revision}"/>
+		<echo message="version: ${openmrs.version.long}"/>
 		<property 
 			name="openmrs.api.name" 
-			value="openmrs-api-trunk.jar"/>
+			value="openmrs-api-${openmrs.version.short}.jar"/>
 
 		<!-- These variables are replaced in the web.xml file during compilation 
 			  and then read in by org.openmrs.web.Listener at openmrs startup -->
