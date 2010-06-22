@@ -300,6 +300,7 @@ Function DeployOpenmrsWar
 	    Call DownloadOpenmrsWar
 	    Call VerifyOpenmrsWarStatus
     !endif
+    SetDetailsPrint both
     DetailPrint "Initializing the application"
     Sleep 20000
 FunctionEnd
@@ -312,6 +313,10 @@ FunctionEnd
 
 Function ExecuteTomcatSetup
 	${If} $TomcatDownload == true
+    SetDetailsPrint textonly
+      DetailPrint "Setting up Tomcat, this may take a few minutes"
+    SetDetailsPrint none
+
 		ExecWait '"$TomcatSetup" /S ++Startup=manual'
 		ExecWait 'net start "Apache Tomcat 6"'
 		Delete $TomcatSetup
@@ -359,6 +364,10 @@ FunctionEnd
 
 Function ExecuteJavaSetup
 	${If} $JavaDownload == true
+    SetDetailsPrint textonly
+      DetailPrint "Setting up Java, this may take a few minutes"
+    SetDetailsPrint none
+
 		ExecWait '"$JavaSetup" /s'
 		Delete $JavaSetup
 	${EndIf}
@@ -399,6 +408,10 @@ FunctionEnd
 
 Function ExecuteMysqlSetup
 	${If} $MysqlDownload == true
+    SetDetailsPrint textonly
+      DetailPrint "Setting up MySQL, this may take a few minutes"
+    SetDetailsPrint none
+
 		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
 		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
 		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q ServiceName=MySQL RootPassword="$MysqlPassword" AddBinToPath=yes'
