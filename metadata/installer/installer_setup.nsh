@@ -56,6 +56,7 @@ Var MysqlSetup
 Var MysqlSelected
 Var MySQL
 Var MysqlPassword
+Var MysqlPasswordLen
 Var MysqlInstallPath
 Var EnableMysqlOption
 Var MysqlDownload
@@ -141,6 +142,11 @@ FunctionEnd
 
 Function MysqlDetailsPageLeave
 	${NSD_GetText} $Password $MysqlPassword
+  StrLen $MysqlPasswordLen $MysqlPassword
+	${If} $MysqlPasswordLen == 0
+    MessageBox MB_ICONEXCLAMATION|MB_OK "Please provide a valid MySql password"
+    Abort
+	${EndIf}
 FunctionEnd
 
 ;Checks if Java is present and installs if not present.
@@ -395,7 +401,7 @@ Function ExecuteMysqlSetup
 	${If} $MysqlDownload == true
 		ExecWait '"msiexec" /i "$MysqlSetup" /quiet /norestart'
 		ReadRegStr $MysqlInstallPath HKLM "SOFTWARE\MySQL AB\MySQL Server 5.1" "Location"
-		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q ServiceName=MySQL RootPassword=$MysqlPassword AddBinToPath=yes'
+		ExecWait '$MysqlInstallPathbin\MySQLInstanceConfig.exe -i -q ServiceName=MySQL RootPassword="$MysqlPassword" AddBinToPath=yes'
 		Delete $MysqlSetup
 	${EndIf}
 FunctionEnd
